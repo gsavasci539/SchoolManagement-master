@@ -1,0 +1,6 @@
+{
+  "js/ts.tsserver.experimental.enableProjectDiagnostics": false,
+  "js/ts.tsserver.watchOptions": {
+    "excludeDirectories": ["**/node_modules", "**/node_modules/**"]
+  }
+}
