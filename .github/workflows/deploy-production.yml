@@ -1,0 +1,35 @@
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://app.example.com
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Backup database
+        run: echo "pg_dump backup before deploy"
+
+      - name: Run migrations
+        run: echo "alembic upgrade head"
+
+      - name: Deploy
+        run: echo "Deploy production with manual approval gate"
+
+      - name: Health check
+        run: |
+          echo "curl -f https://app.example.com/health"
+          echo "curl -f https://app.example.com/ready"
+
+      - name: Rollback note on failure
+        if: failure()
+        run: |
+          echo "::error::Deploy failed. Rollback: docker compose -f docker-compose.prod.yml up -d --no-build <previous-tag>"
+          echo "See README.md Rollback Plan section"

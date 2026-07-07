@@ -1,0 +1,46 @@
+name: Docker Build
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: false
+          tags: edupanel-backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: false
+          tags: edupanel-frontend:${{ github.sha }}
+          build-args: |
+            VITE_API_BASE_URL=/api
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Validate docker compose
+        env:
+          APP_ENV: production
+        run: |
+          cp backend/.env.example backend/.env
+          sed -i 's/^APP_ENV=.*/APP_ENV=production/' backend/.env
+          sed -i 's/^JWT_SECRET_KEY=.*/JWT_SECRET_KEY=ci-compose-validation-secret-only-1234567890/' backend/.env
+          docker compose config
